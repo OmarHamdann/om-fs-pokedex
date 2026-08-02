@@ -2,6 +2,8 @@
 
 This repository is used for the CI/CD module of the Full Stack Open course
 
+Deployed app: <https://om-fs-pokedex.onrender.com>
+
 ## Commands
 
 Start by running `npm install` inside the project folder
