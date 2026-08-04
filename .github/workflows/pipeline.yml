@@ -29,6 +29,8 @@ jobs:
       - name: E2E tests
         run: npm run test:e2e
       - name: Trigger deployment
+        if: ${{ github.event_name == 'push' }}
         run: curl --fail ${{ secrets.RENDER_DEPLOY_HOOK }}
       - name: Check health
+        if: ${{ github.event_name == 'push' }}
         run: curl --fail --retry 10 --retry-delay 15 --retry-all-errors https://om-fs-pokedex.onrender.com/health
