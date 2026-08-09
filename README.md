@@ -15,4 +15,4 @@ Start by running `npm install` inside the project folder
 `npm run start-prod` to run your production build
 `npm run test:e2e` to run the e2e tests with playwright
 
-Created by [Omar Hamdan]
+
