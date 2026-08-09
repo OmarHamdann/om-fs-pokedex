@@ -1,0 +1,27 @@
+name: Periodic health check
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  health_check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the deployed service URL
+        uses: jtalk/url-health-check-action@v5
+        with:
+          url: https://om-fs-pokedex.onrender.com/health-test
+          max-attempts: 3
+          retry-delay: 5s
+      - name: Notify health check failure to Discord
+        if: failure()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          status: Failure
+          content: "Health check failed! <@455326515123453953>"
+          title: "Production is unhealthy"
+          description: "https://om-fs-pokedex.onrender.com/health did not respond successfully."
+          color: 0xff0000
