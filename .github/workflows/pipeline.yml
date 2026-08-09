@@ -9,7 +9,7 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  simple_deployment_pipeline:
+  build_and_test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -24,18 +24,37 @@ jobs:
         run: npm run build
       - name: Test
         run: npm test
+
+  e2e_tests:
+    needs: [build_and_test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Install dependencies
+        run: npm install
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
       - name: E2E tests
         run: npm run test:e2e
+
+  deploy:
+    needs: [build_and_test, e2e_tests]
+    if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ','), '#skip') }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Trigger deployment
-        if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ','), '#skip') }}
         run: curl --fail ${{ secrets.RENDER_DEPLOY_HOOK }}
       - name: Check health
-        if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ','), '#skip') }}
         run: curl --fail --retry 10 --retry-delay 15 --retry-all-errors https://om-fs-pokedex.onrender.com/health
+
+  notify_success:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    steps:
       - name: Notify deployment success to Discord
-        if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ','), '#skip') }}
         uses: sarisia/actions-status-discord@v1
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
@@ -44,8 +63,13 @@ jobs:
           title: "New version deployed"
           description: "${{ github.repository }} was successfully deployed to production."
           color: 0x00ff00
+
+  notify_failure:
+    needs: [build_and_test, e2e_tests, deploy]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
       - name: Notify build failure to Discord
-        if: failure()
         uses: sarisia/actions-status-discord@v1
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
@@ -58,15 +82,14 @@ jobs:
           color: 0xff0000
 
   tag_release:
-    needs: [simple_deployment_pipeline]
+    needs: [deploy]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: '0'
       - name: Bump version and push tag
-        if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ','), '#skip') }}
-        uses: anothrNick/github-tag-action@4ed44965e0db8dab2b466a16da04aec3cc312fd8      
+        uses: anothrNick/github-tag-action@4ed44965e0db8dab2b466a16da04aec3cc312fd8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: patch
