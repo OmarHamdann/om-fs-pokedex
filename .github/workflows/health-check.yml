@@ -12,7 +12,7 @@ jobs:
       - name: Check the deployed service URL
         uses: jtalk/url-health-check-action@v5
         with:
-          url: https://om-fs-pokedex.onrender.com/health-test
+          url: https://om-fs-pokedex.onrender.com/health
           max-attempts: 3
           retry-delay: 5s
       - name: Notify health check failure to Discord
