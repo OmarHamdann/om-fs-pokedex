@@ -4,6 +4,8 @@ This repository is used for the CI/CD module of the Full Stack Open course
 
 Deployed app: <https://om-fs-pokedex.onrender.com>
 
+Own pipeline exercise repository: <https://github.com/OmarHamdann/full-stack-open-blogapp>
+
 ## Commands
 
 Start by running `npm install` inside the project folder
